@@ -1,0 +1,3 @@
+[submodule "CCs"]
+	path = CCs
+	url = https://github.com/lucas-hooghof/CCs.git
