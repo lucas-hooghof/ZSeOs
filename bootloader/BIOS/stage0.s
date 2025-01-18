@@ -30,10 +30,32 @@ _start:
     jc .UseCHS
     cmpw $0xAA55,%bx
     jne .UseCHS
-    test $1,%cx
-    jnz .UseCHS
 
 .UseLBA:
+    #Load partition 1 into register esi 
+    lea part1,%esi
+    #Load 0 into ax to count partitions
+    movw $0,%ax
+
+    partcheck:
+        #check for bootindecator
+        cmpb $1,(%esi)
+        jne nextpart
+        #check for ostype
+        cmpb $0xCC,4(%esi)
+        jne nextpart
+
+        jmp foundpart
+    nextpart:
+        #Check if 4 is set in ax
+        cmpw $4,%ax
+        je FailedToFindBootPartition
+        #Go to next partition
+        addl $16,%esi
+        incw %ax
+        jmp partcheck
+
+    foundpart:
 
     jmp _loop
 
@@ -42,7 +64,10 @@ _start:
     call print
     jmp _loop
 
-    
+FailedToFindBootPartition:
+    movw $BOOT_PARTITION_NOT_FOUND,%si
+    call print
+    jmp _loop
 
 _loop:
     jmp _loop
@@ -69,6 +94,7 @@ print:
 
 HELLO_WORLD: .asciz "Hello world!\n"
 EXTENSIONS_NOT_PRESENT: .asciz "Extensions are not found. Reboot!\n"
+BOOT_PARTITION_NOT_FOUND: .asciz "Cant find boot partition!\n"
 BOOT_DRIVE: .byte 0
 
 DISK_DAP:

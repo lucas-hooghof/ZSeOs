@@ -14,14 +14,16 @@ int boot = 0; // BIOS or UEFI
 char* execution;
 char* image_name = "build/ZSEOS.hdd"; //.hdd stands for hard drive disk
 
-void Run_Qemu(FILE* image)
+void Run_Qemu()
 {
     //TODO: Make a accourding command depending on arch and boot
-    if (boot == 0 && arch == 0)
+    if (boot == 0 && arch == 0 && build == 0)
     {
         CCS_CMD* runcmd = CCS_CreateCommand();
         CCS_SetCmdCommand(runcmd,"qemu-system-i386");
-        CCS_AddArgument(runcmd,"");
+        CCS_AddArgument(runcmd,"-hda");
+        CCS_AddArgument(runcmd,image_name);
+        CCS_Execute_Command(runcmd,true);
         CCS_DestroyCommand(runcmd);
     }
 }
@@ -67,6 +69,11 @@ int main(int argc,char* argv[])
         boot = 1;
     }
 
+    if (!strcmp(argv[1],"run"))
+    {
+        Run_Qemu(image_name);
+        return 1;
+    }
 
     // This means the help command is not issued
     if (strcmp(argv[1],"help") && strcmp(argv[1],"clean"))
@@ -171,11 +178,6 @@ int main(int argc,char* argv[])
                 printf("Failed to open file\n");
                 return 1;
             }
-        }
-        if (!strcmp(argv[1],"run"))
-        {
-            Run_Qemu(image);
-        }
 
         else if (!strcmp(argv[1],"build"))
         {
@@ -213,6 +215,7 @@ int main(int argc,char* argv[])
             return 0;
         }
         fclose(image);
+        }
     }
     else if (!strcmp(argv[1],"clean"))
     {
