@@ -56,6 +56,18 @@ _start:
         jmp partcheck
 
     foundpart:
+        movl 8(%esi),%eax
+        movl %eax,sector_start
+        movw $1,sector_count
+        movw $0,segment
+        movw $0x7E00,offset
+        movw $DISK_DAP,%si
+        movb $0x42,%ah
+
+        movb BOOT_DRIVE,%dl
+        int $0x13
+
+        jc FailedToReadFirstSectorOfBootpart
 
     jmp _loop
 
@@ -63,6 +75,8 @@ _start:
     movw $EXTENSIONS_NOT_PRESENT,%si
     call print
     jmp _loop
+
+FailedToReadFirstSectorOfBootpart:
 
 FailedToFindBootPartition:
     movw $BOOT_PARTITION_NOT_FOUND,%si
@@ -93,12 +107,22 @@ print:
     ret
 
 HELLO_WORLD: .asciz "Hello world!\n"
-EXTENSIONS_NOT_PRESENT: .asciz "Extensions are not found. Reboot!\n"
-BOOT_PARTITION_NOT_FOUND: .asciz "Cant find boot partition!\n"
+EXTENSIONS_NOT_PRESENT: .asciz "Extensions are not found. Reboot!\n402\n"
+BOOT_PARTITION_NOT_FOUND: .asciz "Cant find boot partition!\n201\n"
+BOOT_PART_NOT_READ: .asciz "Cant read boot partition. Reboot!\n202\n"
 BOOT_DRIVE: .byte 0
 
 DISK_DAP:
-
+    .byte 0x10
+    .byte 0x00
+sector_count:
+    .word 0x0000
+offset:
+    .word 0x0000
+segment:
+    .word 0x0000
+sector_start:
+    .quad 0x0000000000000000
 
 .fill 440-(.-_start),1,0
 

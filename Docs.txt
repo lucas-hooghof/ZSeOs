@@ -1,0 +1,15 @@
+C Headers(With POSIX): https://en.cppreference.com/w/c/header
+Low level runtime library: https://gcc.gnu.org/onlinedocs/gccint/index.html#SEC_Contents
+LibC: https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf
+Intel SDM: https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html
+VGA Programmers Refrence: https://vtda.org/books/Computing/Programming/EGA-VGA-ProgrammersReferenceGuide2ndEd_BradleyDyckKliewer.pdf
+VESA: https://wiki.osdev.org/User:Omarrx024/VESA_Tutorial
+ATA PIO: https://wiki.osdev.org/ATA_PIO_Mode
+ATA COMMAND MATRIX: https://wiki.osdev.org/ATA_Command_Matrix
+Memory Map(x86 BIOS): https://wiki.osdev.org/Memory_Map_(x86)
+Detect Memory(x86 BIOS): https://wiki.osdev.org/Detecting_Memory_(x86) (also see acpi spec)
+
+ACPI SPEC HTML:
+	https://uefi.org/specs/ACPI/6.5_A/
+UEFI SPEC HTML:
+	https://uefi.org/specs/ACPI/6.5_A/

@@ -21,9 +21,14 @@ void Run_Qemu()
     {
         CCS_CMD* runcmd = CCS_CreateCommand();
         CCS_SetCmdCommand(runcmd,"qemu-system-i386");
-        CCS_AddArgument(runcmd,"-hda");
-        CCS_AddArgument(runcmd,image_name);
+        CCS_AddArgument(runcmd,"-drive");
+        char* driveinfo =(char*) malloc(strlen("id=disk,") + strlen("file=") + strlen(image_name)+strlen(",if=none") + 2);
+        sprintf(driveinfo,"id=disk,file=%s,if=none",image_name);
+        CCS_AddArgument(runcmd,driveinfo);
+        CCS_AddArgument(runcmd,"-device ahci,id=ahci");
+        CCS_AddArgument(runcmd,"-device ide-hd,drive=disk,bus=ahci.0");
         CCS_Execute_Command(runcmd,true);
+        free(driveinfo);
         CCS_DestroyCommand(runcmd);
     }
 }
@@ -131,6 +136,7 @@ int main(int argc,char* argv[])
             CCS_AddArgument(ddfile,arg);
             CCS_AddArgument(ddfile,"bs=512");
             CCS_AddArgument(ddfile,"count=2048");
+            CCS_AddArgument(ddfile,">/dev/null");
             CCS_Execute_Command(ddfile,true);
             free(arg);
             CCS_DestroyCommand(ddfile);
@@ -141,9 +147,12 @@ int main(int argc,char* argv[])
                 printf("Failed to open file\n");
                 return 1;
             }
+
+            goto BuildReady;
         }
         else 
         {
+            BuildReady:
             mbrparttable[0].BootIndicator = 1;
             mbrparttable[0].OsType = ZSEOS_BOOT_DRIVE;
             mbrparttable[0].StartLBA = 2;
@@ -167,6 +176,7 @@ int main(int argc,char* argv[])
             CCS_AddArgument(ddfile,arg);
             CCS_AddArgument(ddfile,"bs=512");
             CCS_AddArgument(ddfile,"count=2048");
+            CCS_AddArgument(ddfile,">/dev/null");
             CCS_Execute_Command(ddfile,true);
             free(arg);
             CCS_DestroyCommand(ddfile);
