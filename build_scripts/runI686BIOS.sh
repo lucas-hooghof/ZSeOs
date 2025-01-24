@@ -1,2 +1,2 @@
 
-./a.out run i686 Release BIOS
+./a.out run Release i686 BIOS

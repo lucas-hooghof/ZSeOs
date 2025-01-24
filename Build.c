@@ -31,6 +31,21 @@ void Run_Qemu()
         free(driveinfo);
         CCS_DestroyCommand(runcmd);
     }
+    else if (boot == 0 && arch == 0 && build == 1)
+    {
+        CCS_CMD* runcmd = CCS_CreateCommand();
+        CCS_SetCmdCommand(runcmd,"qemu-system-i386");
+        CCS_AddArgument(runcmd,"-drive");
+        char* driveinfo =(char*) malloc(strlen("id=disk,") + strlen("file=") + strlen(image_name)+strlen(",if=none") + 2);
+        sprintf(driveinfo,"id=disk,file=%s,if=none",image_name);
+        CCS_AddArgument(runcmd,driveinfo);
+        CCS_AddArgument(runcmd,"-device ahci,id=ahci");
+        CCS_AddArgument(runcmd,"-device ide-hd,drive=disk,bus=ahci.0");
+        CCS_AddArgument(runcmd,"-S -s &");
+        CCS_Execute_Command(runcmd,true);
+        free(driveinfo);
+        CCS_DestroyCommand(runcmd);
+    }
 }
 
 int main(int argc,char* argv[])
@@ -85,10 +100,12 @@ int main(int argc,char* argv[])
     {
         //Check for Build directory and then open file    
         FILE* image = NULL;
-        if (!CCS_DoesFolderExist(NULL,"build") 
+        if (    !CCS_DoesFolderExist(NULL,"build") 
                 && !CCS_DoesFolderExist(NULL,"build/OBJ") 
                 && !CCS_DoesFolderExist(NULL,"build/OBJ/stage0")
                 && !CCS_DoesFolderExist(NULL,"build/bin")
+                && !CCS_DoesFolderExist(NULL,"build/bin/bootloader")
+                && !CCS_DoesFolderExist(NULL,"build/OBJ/stage1")
                 ) // We can use NULL because the function does not use a command struct
         {
             // Issue a Create Build folder and open file
@@ -109,6 +126,12 @@ int main(int argc,char* argv[])
             mkbuild = CCS_CreateCommand();
             CCS_SetCmdCommand(mkbuild,"mkdir");
             CCS_AddArgument(mkbuild,"build/OBJ/stage0");
+            CCS_Execute_Command(mkbuild,true);
+
+            CCS_DestroyCommand(mkbuild);
+            mkbuild = CCS_CreateCommand();
+            CCS_SetCmdCommand(mkbuild,"mkdir");
+            CCS_AddArgument(mkbuild,"build/OBJ/stage1");
             CCS_Execute_Command(mkbuild,true);
 
             CCS_DestroyCommand(mkbuild);
@@ -217,6 +240,38 @@ int main(int argc,char* argv[])
                     printf("Failed to write MBR\n");
                     return 1;
                 }
+
+                // Issue a assemble command
+                CCS_CMD* assemble_stage1 = CCS_CreateCommand();
+                CCS_SetCmdCommand(assemble_stage1,"i686-elf-as");  // Toolchain assembler for i686
+                CCS_AddArgument(assemble_stage1,"-o build/OBJ/stage1/stage1.o");
+                CCS_AddArgument(assemble_stage1,"-c bootloader/BIOS/i686/stage1.s");
+
+                CCS_Execute_Command(assemble_stage1,true);
+                CCS_DestroyCommand(assemble_stage1);
+                // Issue a link command
+                CCS_CMD* link_stage1 = CCS_CreateCommand();
+                CCS_SetCmdCommand(link_stage1,"i686-elf-ld");
+                CCS_AddArgument(link_stage1,"-o build/bin/bootloader/stage1.bin");
+                CCS_AddArgument(link_stage1,"build/OBJ/stage1/stage1.o");
+                CCS_AddArgument(link_stage1,"-Ttext 0x7E00");
+                CCS_AddArgument(link_stage1,"--oformat=binary");
+                CCS_Execute_Command(link_stage1,true);
+                CCS_DestroyCommand(link_stage1);
+
+                CCS_CMD* add_stage1 = CCS_CreateCommand();
+                CCS_SetCmdCommand(add_stage1,"dd");
+                CCS_AddArgument(add_stage1,"if=build/bin/bootloader/stage1.bin");
+                char* arg = (char*)malloc(strlen("of=") + strlen(image_name) + 3);
+                strcpy(arg,"of=");
+                strncat(arg,image_name,strlen(image_name));
+                CCS_AddArgument(add_stage1,arg);
+                CCS_AddArgument(add_stage1,"bs=512");
+                CCS_AddArgument(add_stage1,"seek=1");
+                CCS_AddArgument(add_stage1,"conv=notrunc");
+                CCS_Execute_Command(add_stage1,true);
+                CCS_DestroyCommand(add_stage1);
+                free(arg);
             }
         }
         if (image == NULL)
