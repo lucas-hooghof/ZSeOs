@@ -106,6 +106,7 @@ int main(int argc,char* argv[])
                 && !CCS_DoesFolderExist(NULL,"build/bin")
                 && !CCS_DoesFolderExist(NULL,"build/bin/bootloader")
                 && !CCS_DoesFolderExist(NULL,"build/OBJ/stage1")
+                && !CCS_DoesFolderExist(NULL,"build/OBJ/stage2")
                 ) // We can use NULL because the function does not use a command struct
         {
             // Issue a Create Build folder and open file
@@ -135,6 +136,15 @@ int main(int argc,char* argv[])
             CCS_Execute_Command(mkbuild,true);
 
             CCS_DestroyCommand(mkbuild);
+
+            // Make the command add a stage2 folder to the OBJECTS folder
+            mkbuild = CCS_CreateCommand();
+            CCS_SetCmdCommand(mkbuild,"mkdir");
+            CCS_AddArgument(mkbuild,"build/OBJ/stage2");
+            CCS_Execute_Command(mkbuild,true);
+
+            CCS_DestroyCommand(mkbuild);
+
             // make the command add bin folder
             mkbuild = CCS_CreateCommand();
             CCS_SetCmdCommand(mkbuild,"mkdir");
@@ -245,7 +255,7 @@ int main(int argc,char* argv[])
                 CCS_CMD* assemble_stage1 = CCS_CreateCommand();
                 CCS_SetCmdCommand(assemble_stage1,"i686-elf-as");  // Toolchain assembler for i686
                 CCS_AddArgument(assemble_stage1,"-o build/OBJ/stage1/stage1.o");
-                CCS_AddArgument(assemble_stage1,"-c bootloader/BIOS/i686/stage1.s");
+                CCS_AddArgument(assemble_stage1,"-c bootloader/BIOS/i686/stage1/stage1.s");
 
                 CCS_Execute_Command(assemble_stage1,true);
                 CCS_DestroyCommand(assemble_stage1);
@@ -271,6 +281,58 @@ int main(int argc,char* argv[])
                 CCS_AddArgument(add_stage1,"conv=notrunc");
                 CCS_Execute_Command(add_stage1,true);
                 CCS_DestroyCommand(add_stage1);
+                free(arg);
+
+                CCS_CMD* assemble_stage2 = CCS_CreateCommand();
+                CCS_SetCmdCommand(assemble_stage2,"i686-elf-as");  // Toolchain assembler for i686
+                CCS_AddArgument(assemble_stage2,"-o build/OBJ/stage2/stage2entry.o");
+                CCS_AddArgument(assemble_stage2,"-c bootloader/BIOS/i686/stage2/stage2.entry.s");
+
+                CCS_Execute_Command(assemble_stage2,true);
+                CCS_DestroyCommand(assemble_stage2);
+                // Issue a link command
+                CCS_CMD* link_stage2 = CCS_CreateCommand();
+                CCS_SetCmdCommand(link_stage2,"i686-elf-ld");
+                CCS_AddArgument(link_stage2,"-o build/bin/bootloader/stage2.bin");
+                CCS_AddArgument(link_stage2,"build/OBJ/stage2/stage2entry.o");
+                int filecount = 0;
+                char** files = CCS_GetFilesInDir(NULL,&filecount,"bootloader/BIOS/i686/stage2");
+                if (files == NULL)
+                {
+                    return 0;
+                }
+                for (size_t filei = 0; filei < filecount; filei++)
+                {
+                    if (strstr(files[filei],".c") != NULL)
+                    {
+                        printf("Found a c file: %s\n",files[filei]);
+                        //COMPILE AS C
+                    }
+                    else if (strstr(files[filei],".s") != NULL)
+                    {
+                        printf("Found a ASM file: %s\n",files[filei]);
+                        //CHECK IF NOT STAGE2.ENTRY.S
+                        //AFTER ASSEMBLE AS ASM
+                    }
+                }
+                //free(files);
+                CCS_AddArgument(link_stage2,"-Tlinker_scripts/stage2.ld");
+                CCS_AddArgument(link_stage2,"--oformat=binary");
+                CCS_Execute_Command(link_stage2,true);
+                CCS_DestroyCommand(link_stage2);
+
+                CCS_CMD* add_stage2 = CCS_CreateCommand();
+                CCS_SetCmdCommand(add_stage2,"dd");
+                CCS_AddArgument(add_stage2,"if=build/bin/bootloader/stage2.bin");
+                arg = (char*)malloc(strlen("of=") + strlen(image_name) + 3);
+                strcpy(arg,"of=");
+                strncat(arg,image_name,strlen(image_name));
+                CCS_AddArgument(add_stage2,arg);
+                CCS_AddArgument(add_stage2,"bs=512");
+                CCS_AddArgument(add_stage2,"seek=2");
+                CCS_AddArgument(add_stage2,"conv=notrunc");
+                CCS_Execute_Command(add_stage2,true);
+                CCS_DestroyCommand(add_stage2);
                 free(arg);
             }
         }
