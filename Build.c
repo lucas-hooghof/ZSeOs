@@ -301,12 +301,28 @@ int main(int argc,char* argv[])
                 {
                     return 0;
                 }
+                CCS_CMD* compile_stage2_c_file = CCS_CreateCommand();
+                CCS_SetCmdCommand(compile_stage2_c_file,"i686-elf-gcc");
+                CCS_AddArgument(compile_stage2_c_file,"-ffreestanding");
+                CCS_AddArgument(compile_stage2_c_file,"-mno-red-zone");
+                CCS_AddArgument(compile_stage2_c_file,"-c");
                 for (size_t filei = 0; filei < filecount; filei++)
                 {
                     if (strstr(files[filei],".c") != NULL)
                     {
                         printf("Found a c file: %s\n",files[filei]);
-                        //COMPILE AS C
+                        CCS_AddArgument(compile_stage2_c_file,files[filei]);
+                        CCS_AddArgument(compile_stage2_c_file,"-o");
+                        size_t length = strlen(files[filei]);
+                        char* objfile = (char*)malloc(length+1);
+                        strncpy(objfile,files[filei],length-2);
+                        objfile[length-2] = '.';
+                        objfile[length-1] = 'o';
+                        objfile[length] = '\0';
+                        CCS_AddArgument(compile_stage2_c_file,objfile);
+                        CCS_Execute_Command(compile_stage2_c_file,true);
+                        CCS_RemoveArgument(compile_stage2_c_file,objfile);
+                        free(objfile);
                     }
                     else if (strstr(files[filei],".s") != NULL)
                     {
@@ -315,7 +331,8 @@ int main(int argc,char* argv[])
                         //AFTER ASSEMBLE AS ASM
                     }
                 }
-                //free(files);
+                CCS_DestroyCommand(compile_stage2_c_file);
+                free(files);
                 CCS_AddArgument(link_stage2,"-Tlinker_scripts/stage2.ld");
                 CCS_AddArgument(link_stage2,"--oformat=binary");
                 CCS_Execute_Command(link_stage2,true);
