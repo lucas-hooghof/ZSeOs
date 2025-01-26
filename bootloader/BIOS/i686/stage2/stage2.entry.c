@@ -1,5 +1,10 @@
-void _cstart()
+#include <stdint.h>
+#include "bootinfo.h"
+#include "print.h"
+void _cstart(bootinfo_t* bootinfo)
 {
-    char* vga_memory = (char*)0xB8000;
-    vga_memory[0] = 'A';
+    Initlize_output(bootinfo);
+
+    putc('B');
+    putc('C');
 }

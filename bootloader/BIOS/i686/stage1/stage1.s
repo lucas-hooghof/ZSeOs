@@ -9,8 +9,9 @@
 _start:
     #Clear the screen
     movb $0,%ah
-    movb $0x02,%al
+    movb $0x03,%al
     int $0x10
+    movw $TEXT_DISPLAY_DATA,DISPLAY_DATA_MODE
     #Load stage2
     call Load_Stage2
     #Detect Video mode
@@ -97,6 +98,7 @@ Get_Memory_Map:
     movw %ax,%es
 
     movw $0x5000,%di
+    movw %di,MEMORY_MAP_LOCATION
     movl $24,%ecx
 
     movl $0x534D4150,%edx
@@ -138,8 +140,15 @@ segment:
 sector_start:
     .quad 0x0000000000000000
 
-#VESA FLAG
-ISVESA_PRESENT: .byte 0
+
+BOOTINFO:
+    DISPLAY_MODE: .byte 0
+    MEMORY_MAP_LOCATION: .word 0
+    DISPLAY_DATA_MODE: .word 0
+
+TEXT_DISPLAY_DATA:
+    .word 80
+    .word 25
 
 .code32
 pmode_init:
@@ -151,11 +160,7 @@ pmode_init:
     movl $0x3000, %esp
     movl %esp,%ebp
 
-    movl $0xB8000, %ebx
-
-    movb $0x41,(%ebx)
-
-    #push ISVESA_PRESENT
+    push $BOOTINFO
     jmp 0x8000
 
 _loop32:

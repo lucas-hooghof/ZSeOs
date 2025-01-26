@@ -294,49 +294,66 @@ int main(int argc,char* argv[])
                 CCS_CMD* link_stage2 = CCS_CreateCommand();
                 CCS_SetCmdCommand(link_stage2,"i686-elf-ld");
                 CCS_AddArgument(link_stage2,"-o build/bin/bootloader/stage2.bin");
-                CCS_AddArgument(link_stage2,"build/OBJ/stage2/stage2entry.o");
                 int filecount = 0;
                 char** files = CCS_GetFilesInDir(NULL,&filecount,"bootloader/BIOS/i686/stage2");
                 if (files == NULL)
                 {
                     return 0;
                 }
-                CCS_CMD* compile_stage2_c_file = CCS_CreateCommand();
-                CCS_SetCmdCommand(compile_stage2_c_file,"i686-elf-gcc");
-                CCS_AddArgument(compile_stage2_c_file,"-ffreestanding");
-                CCS_AddArgument(compile_stage2_c_file,"-mno-red-zone");
-                CCS_AddArgument(compile_stage2_c_file,"-c");
+                CCS_CMD* compile_stage2_c_file = NULL;
                 for (size_t filei = 0; filei < filecount; filei++)
                 {
                     if (strstr(files[filei],".c") != NULL)
                     {
-                        printf("Found a c file: %s\n",files[filei]);
+                        compile_stage2_c_file = CCS_CreateCommand();
+                        CCS_SetCmdCommand(compile_stage2_c_file,"i686-elf-gcc");
+                        CCS_AddArgument(compile_stage2_c_file,"-ffreestanding");
+                        CCS_AddArgument(compile_stage2_c_file,"-mno-red-zone");
+                        CCS_AddArgument(compile_stage2_c_file,"-I libc/include");
+                        CCS_AddArgument(compile_stage2_c_file,"-c");
                         CCS_AddArgument(compile_stage2_c_file,files[filei]);
                         CCS_AddArgument(compile_stage2_c_file,"-o");
-                        size_t length = strlen(files[filei]);
+                        size_t length = strlen(files[filei]) + strlen("build/OBJ/stage2/");
                         char* objfile = (char*)malloc(length+1);
-                        strncpy(objfile,files[filei],length-2);
+                        strcpy(objfile,"build/OBJ/stage2/");
+                        strcat(objfile,files[filei]+strlen("bootloader/BIOS/i686/stage2"));
                         objfile[length-2] = '.';
                         objfile[length-1] = 'o';
                         objfile[length] = '\0';
                         CCS_AddArgument(compile_stage2_c_file,objfile);
                         CCS_Execute_Command(compile_stage2_c_file,true);
-                        CCS_RemoveArgument(compile_stage2_c_file,objfile);
+                        CCS_DestroyCommand(compile_stage2_c_file);
                         free(objfile);
                     }
                     else if (strstr(files[filei],".s") != NULL)
                     {
-                        printf("Found a ASM file: %s\n",files[filei]);
                         //CHECK IF NOT STAGE2.ENTRY.S
                         //AFTER ASSEMBLE AS ASM
                     }
-                }
-                CCS_DestroyCommand(compile_stage2_c_file);
+                    free(files[filei]);
+                }   
                 free(files);
+                filecount = 0;
+                files = CCS_GetFilesInDir(NULL,&filecount,"build/OBJ/stage2");
+                if (files == NULL)
+                {
+                    return 1;
+                }
+                for (size_t filei = 0; filei < filecount; filei++)
+                {
+                    CCS_AddArgument(link_stage2,files[filei]);
+                }
+
                 CCS_AddArgument(link_stage2,"-Tlinker_scripts/stage2.ld");
                 CCS_AddArgument(link_stage2,"--oformat=binary");
                 CCS_Execute_Command(link_stage2,true);
                 CCS_DestroyCommand(link_stage2);
+                for (size_t filei = 0; filei < filecount; filei++)
+                {
+                    free(files[filei]);
+                }
+
+                free(files);
 
                 CCS_CMD* add_stage2 = CCS_CreateCommand();
                 CCS_SetCmdCommand(add_stage2,"dd");
