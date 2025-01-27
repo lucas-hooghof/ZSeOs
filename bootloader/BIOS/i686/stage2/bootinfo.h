@@ -18,7 +18,6 @@ typedef struct
 
 typedef struct 
 {
-    uint8_t DisplayMode;
-    uint16_t MemoryMapLocation;
-    uintptr_t DisplayData;
+    uint32_t DisplayMode;
+    uint32_t MemoryMapLocation;
 }__attribute__((packed))bootinfo_t;

@@ -3,6 +3,7 @@
 #include "CCs/CCS.h"
 
 
+#include <stdarg.h>
 #include <string.h>
 
 #include "buildsystem/BIOSBootloader.h"
@@ -50,6 +51,7 @@ void Run_Qemu()
 
 int main(int argc,char* argv[])
 {
+    
     if (argc < 5)
     {
         // We put execution first so we can add stuff like help later
@@ -283,13 +285,6 @@ int main(int argc,char* argv[])
                 CCS_DestroyCommand(add_stage1);
                 free(arg);
 
-                CCS_CMD* assemble_stage2 = CCS_CreateCommand();
-                CCS_SetCmdCommand(assemble_stage2,"i686-elf-as");  // Toolchain assembler for i686
-                CCS_AddArgument(assemble_stage2,"-o build/OBJ/stage2/stage2entry.o");
-                CCS_AddArgument(assemble_stage2,"-c bootloader/BIOS/i686/stage2/stage2.entry.s");
-
-                CCS_Execute_Command(assemble_stage2,true);
-                CCS_DestroyCommand(assemble_stage2);
                 // Issue a link command
                 CCS_CMD* link_stage2 = CCS_CreateCommand();
                 CCS_SetCmdCommand(link_stage2,"i686-elf-ld");
@@ -301,6 +296,7 @@ int main(int argc,char* argv[])
                     return 0;
                 }
                 CCS_CMD* compile_stage2_c_file = NULL;
+                CCS_CMD* compile_stage2_s_file = NULL;
                 for (size_t filei = 0; filei < filecount; filei++)
                 {
                     if (strstr(files[filei],".c") != NULL)
@@ -309,11 +305,13 @@ int main(int argc,char* argv[])
                         CCS_SetCmdCommand(compile_stage2_c_file,"i686-elf-gcc");
                         CCS_AddArgument(compile_stage2_c_file,"-ffreestanding");
                         CCS_AddArgument(compile_stage2_c_file,"-mno-red-zone");
+                        CCS_AddArgument(compile_stage2_c_file,"-Wall");
+                        CCS_AddArgument(compile_stage2_c_file,"-Werror");
                         CCS_AddArgument(compile_stage2_c_file,"-I libc/include");
                         CCS_AddArgument(compile_stage2_c_file,"-c");
                         CCS_AddArgument(compile_stage2_c_file,files[filei]);
                         CCS_AddArgument(compile_stage2_c_file,"-o");
-                        size_t length = strlen(files[filei]) + strlen("build/OBJ/stage2/");
+                        size_t length = strlen(files[filei]) + strlen("build/OBJ/stage2/") -strlen("bootloader/BIOS/i686/stage2");
                         char* objfile = (char*)malloc(length+1);
                         strcpy(objfile,"build/OBJ/stage2/");
                         strcat(objfile,files[filei]+strlen("bootloader/BIOS/i686/stage2"));
@@ -327,8 +325,20 @@ int main(int argc,char* argv[])
                     }
                     else if (strstr(files[filei],".s") != NULL)
                     {
-                        //CHECK IF NOT STAGE2.ENTRY.S
-                        //AFTER ASSEMBLE AS ASM
+                        compile_stage2_s_file = CCS_CreateCommand();
+                        CCS_SetCmdCommand(compile_stage2_s_file,"i686-elf-as");
+                        CCS_AddArgument(compile_stage2_s_file,"-c");
+                        CCS_AddArgument(compile_stage2_s_file,files[filei]);
+                        CCS_AddArgument(compile_stage2_s_file,"-o");
+                        size_t length = strlen(files[filei]) + strlen("build/OBJ/stage2/") -strlen("bootloader/BIOS/i686/stage2");
+                        char* objfile = (char*)malloc(length+2);
+                        strcpy(objfile,"build/OBJ/stage2");
+                        strcat(objfile,files[filei]+strlen("bootloader/BIOS/i686/stage2"));
+                        strcat(objfile,".o");
+                        CCS_AddArgument(compile_stage2_s_file,objfile);
+                        CCS_Execute_Command(compile_stage2_s_file,true);
+                        CCS_DestroyCommand(compile_stage2_s_file);
+                        free(objfile);
                     }
                     free(files[filei]);
                 }   
@@ -346,6 +356,7 @@ int main(int argc,char* argv[])
 
                 CCS_AddArgument(link_stage2,"-Tlinker_scripts/stage2.ld");
                 CCS_AddArgument(link_stage2,"--oformat=binary");
+                CCS_AddArgument(link_stage2,"-Map=stage2.map");
                 CCS_Execute_Command(link_stage2,true);
                 CCS_DestroyCommand(link_stage2);
                 for (size_t filei = 0; filei < filecount; filei++)

@@ -11,24 +11,32 @@ _start:
     movb $0,%ah
     movb $0x03,%al
     int $0x10
-    movw $TEXT_DISPLAY_DATA,DISPLAY_DATA_MODE
+    #Disable textmode cursor
+    movb $1,%ah
+    movw $0x2607,%cx
+    int $0x10
     #Load stage2
     call Load_Stage2
     #Detect Video mode
     call Detect_Video_Mode
     #Get memory map
+    push %eax
     call Get_Memory_Map
+    pop %eax
     #Enable A20
+    push %eax
     call EnableA20
+    pop %eax
     #Disable intterrupts
     cli
     #Load GDT
     lgdt gdtp
     #Set protected mode bit in cr0
+    push %eax
     movl %cr0,%eax
     orl $1,%eax
     movl %eax,%cr0
-
+    pop %eax
     ljmp $0x08,$pmode_init
 _loop:
     jmp _loop
@@ -88,6 +96,7 @@ gdt_end:
 #Will check for VESA
 #If its not present it will set a value
 Detect_Video_Mode:
+    movl $0,%eax
     ret
 
 #Get memory map
@@ -98,7 +107,6 @@ Get_Memory_Map:
     movw %ax,%es
 
     movw $0x5000,%di
-    movw %di,MEMORY_MAP_LOCATION
     movl $24,%ecx
 
     movl $0x534D4150,%edx
@@ -132,7 +140,7 @@ DISK_DAP:
     .byte 0x10
     .byte 0x00
 sector_count:
-    .word 0x0001
+    .word 0x0010
 offset:
     .word 0x8000
 segment:
@@ -141,17 +149,13 @@ sector_start:
     .quad 0x0000000000000000
 
 
-BOOTINFO:
-    DISPLAY_MODE: .byte 0
-    MEMORY_MAP_LOCATION: .word 0
-    DISPLAY_DATA_MODE: .word 0
-
 TEXT_DISPLAY_DATA:
     .word 80
     .word 25
 
 .code32
 pmode_init:
+    push %eax
     movl $0x10, %eax         # Load code segment selector for 32-bit code
     movl %eax, %ds           # Set DS
     movl %eax, %es           # Set ES
@@ -159,8 +163,10 @@ pmode_init:
     movl %eax, %gs           # Set GS
     movl $0x3000, %esp
     movl %esp,%ebp
+    pop %eax
 
-    push $BOOTINFO
+    movl $0,0x00000500
+    movl $0x00005000,0x00000504
     jmp 0x8000
 
 _loop32:
