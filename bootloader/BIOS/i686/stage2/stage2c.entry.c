@@ -6,7 +6,7 @@
 void _cstart()
 {
     bootinfo_t* info = (bootinfo_t*)0x00000500;
-    Initlize_output(info->DisplayMode);
+    Initlize_output(info->DisplayMode,1);
     if (info->DisplayMode == 0)
     {
         //Check if VGA controller is in use
@@ -16,7 +16,8 @@ void _cstart()
             puts("VGA controller is possible/useable\n");
         }
     }
-    printf("Hello%%");
+
+    printf("");
     for (;;)
     {}
 }

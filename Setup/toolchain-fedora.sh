@@ -42,7 +42,9 @@ pushd ${GCC_BUILD}
 	--disable-nls	     \
 	--enable-languages=c,c++ \
 	--without-headers 
-sudo make -j4 all-gcc
+sudo make -j4 all-gcc 
+sudo make -j4 all-target-libgcc
+sudo make -j4 install-target-libgcc 
 sudo make -j4 install-gcc
 popd
 
@@ -76,6 +78,8 @@ pushd ${GCC_BUILD}
 	--enable-languages=c,c++ \
 	--without-headers 
 sudo make -j4 all-gcc
+sudo make -j4 all-target-libgcc
+sudo make -j4 install-target-libgcc 
 sudo make -j4 install-gcc
 popd
 
