@@ -12,6 +12,10 @@ int build = 0; // Debug or Release
 int arch = 0; // i686 or x86_64
 int boot = 0; // BIOS or UEFI
 
+char* ASM = "i686-elf-as";
+char* LD = "i686-elf-ld";
+char* CC = "i686-elf-gcc";
+
 char* execution;
 char* image_name = "build/ZSEOS.hdd"; //.hdd stands for hard drive disk
 
@@ -232,7 +236,7 @@ int main(int argc,char* argv[])
             {
                 // Issue a assemble command
                 CCS_CMD* assemble_stage0 = CCS_CreateCommand();
-                CCS_SetCmdCommand(assemble_stage0,"i686-elf-as");  // Toolchain assembler for i686
+                CCS_SetCmdCommand(assemble_stage0,"ASM");  // Toolchain assembler for i686
                 CCS_AddArgument(assemble_stage0,"-o build/OBJ/stage0/stage0.o");
                 CCS_AddArgument(assemble_stage0,"-c bootloader/BIOS/stage0.s");
 
@@ -240,7 +244,7 @@ int main(int argc,char* argv[])
                 CCS_DestroyCommand(assemble_stage0);
                 // Issue a link command
                 CCS_CMD* link_stage0 = CCS_CreateCommand();
-                CCS_SetCmdCommand(link_stage0,"i686-elf-ld");
+                CCS_SetCmdCommand(link_stage0,"LD");
                 CCS_AddArgument(link_stage0,"-o build/bin/bootloader/stage0.bin");
                 CCS_AddArgument(link_stage0,"build/OBJ/stage0/stage0.o");
                 CCS_AddArgument(link_stage0,"-Ttext 0x7C00");
@@ -256,7 +260,7 @@ int main(int argc,char* argv[])
 
                 // Issue a assemble command
                 CCS_CMD* assemble_stage1 = CCS_CreateCommand();
-                CCS_SetCmdCommand(assemble_stage1,"i686-elf-as");  // Toolchain assembler for i686
+                CCS_SetCmdCommand(assemble_stage1,"ASM");  // Toolchain assembler for i686
                 CCS_AddArgument(assemble_stage1,"-o build/OBJ/stage1/stage1.o");
                 CCS_AddArgument(assemble_stage1,"-c bootloader/BIOS/i686/stage1/stage1.s");
 
@@ -264,7 +268,7 @@ int main(int argc,char* argv[])
                 CCS_DestroyCommand(assemble_stage1);
                 // Issue a link command
                 CCS_CMD* link_stage1 = CCS_CreateCommand();
-                CCS_SetCmdCommand(link_stage1,"i686-elf-ld");
+                CCS_SetCmdCommand(link_stage1,"LD");
                 CCS_AddArgument(link_stage1,"-o build/bin/bootloader/stage1.bin");
                 CCS_AddArgument(link_stage1,"build/OBJ/stage1/stage1.o");
                 CCS_AddArgument(link_stage1,"-Ttext 0x7E00");
@@ -288,7 +292,7 @@ int main(int argc,char* argv[])
 
                 // Issue a link command
                 CCS_CMD* link_stage2 = CCS_CreateCommand();
-                CCS_SetCmdCommand(link_stage2,"i686-elf-ld");
+                CCS_SetCmdCommand(link_stage2,"LD");
                 CCS_AddArgument(link_stage2,"-o build/bin/bootloader/stage2.bin");
                 int filecount = 0;
                 char** files = CCS_GetFilesInDir(NULL,&filecount,"bootloader/BIOS/i686/stage2");
@@ -303,7 +307,7 @@ int main(int argc,char* argv[])
                     if (strstr(files[filei],".c") != NULL)
                     {
                         compile_stage2_c_file = CCS_CreateCommand();
-                        CCS_SetCmdCommand(compile_stage2_c_file,"i686-elf-gcc");
+                        CCS_SetCmdCommand(compile_stage2_c_file,"CC");
                         CCS_AddArgument(compile_stage2_c_file,"-ffreestanding");
                         CCS_AddArgument(compile_stage2_c_file,"-mno-red-zone");
                         CCS_AddArgument(compile_stage2_c_file,"-Wall");
@@ -327,7 +331,7 @@ int main(int argc,char* argv[])
                     else if (strstr(files[filei],".s") != NULL)
                     {
                         compile_stage2_s_file = CCS_CreateCommand();
-                        CCS_SetCmdCommand(compile_stage2_s_file,"i686-elf-as");
+                        CCS_SetCmdCommand(compile_stage2_s_file,"ASM");
                         CCS_AddArgument(compile_stage2_s_file,"-c");
                         CCS_AddArgument(compile_stage2_s_file,files[filei]);
                         CCS_AddArgument(compile_stage2_s_file,"-o");

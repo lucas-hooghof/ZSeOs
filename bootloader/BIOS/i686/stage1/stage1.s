@@ -135,15 +135,42 @@ Load_Stage2:
     movw $DISK_DAP,%si
     movb $0x42,%ah
     int $0x13
+
+    jc ERROR_LOADING_STAGE2
     ret
 
+ERROR_LOADING_STAGE2:
+    movw $ERROR_LOADING_STAGE2_MSG,%si
+    call print
+    jmp _loop
+ERROR_LOADING_STAGE2_MSG:
+    .asciz "Cant load stage2\r\n"
 
+print: 
+    # Set the page number to 0
+    xorb %bh,%bh
+    # Set interrupt to 0x0E for write character to screen
+    movb $0x0E,%ah
+
+    # Load the character into al from value at si and increment si
+    lodsb 
+
+    #Check if the string has ended if so jump to end
+    cmpb $0,%al
+    je 1f
+
+    # Call the interrupt
+    int $0x10
+    jmp print
+
+1:
+    ret
 
 DISK_DAP:
     .byte 0x10
     .byte 0x00
 sector_count:
-    .word 0x0020
+    .word 0x0010
 offset:
     .word 0x8000
 segment:
