@@ -22,3 +22,5 @@ void Initlize_output(uint32_t displaymode,uint8_t debug);
 void puts(char* str);
 void printf(const char* fmt,...);
 
+void print_buffer(const void* buffer, uint32_t count);
+

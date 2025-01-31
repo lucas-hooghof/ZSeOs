@@ -13,3 +13,5 @@ i686_inb:
     xor %eax,%eax
     inb %dx,%al
     ret
+
+

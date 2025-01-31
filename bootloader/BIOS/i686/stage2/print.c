@@ -1,4 +1,5 @@
 #include "print.h"
+#include <stdarg.h>
 
 putc_ptr putc;
 clear_screen_ptr clearscreen;
@@ -19,6 +20,13 @@ void putc_text_mode(char c)
         x_text_mode = 0;
         y_text_mode++;
         return;
+    }
+    else if (c == '\t')
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            putc(' ');
+        }
     }
 
     int8_t* location = (int8_t*)(TEXT_MEMORY);
@@ -72,6 +80,10 @@ static const char* hexchars = "0123456789abcdef";
 void printf_unsigned(unsigned long long number, int radix) {
     char buffer[32];
     int pos = 0;
+    if (radix == 16)
+    {
+        puts("0x");
+    }
     do {
         unsigned long long rem = number % radix;
         number /= radix;
@@ -94,9 +106,9 @@ void printf_signed(long long number, int radix)
 
 void printf(const char* fmt,...)
 {
-    //Use varible arguments
-    int* argp = (int*)&fmt;
-    printf_unsigned(12345678,10);
+    //Use varible argument
+    va_list args;
+    va_start(args,fmt);
 
     int state = PRINTF_STATE_NORMAL;
     int length = PRINTF_LENGTH_NORMAL;
@@ -109,8 +121,6 @@ void printf(const char* fmt,...)
     (void)number;
     (void)sign;
     (void)radix;
-
-    argp++;
 
     while (*fmt)
     {
@@ -181,16 +191,20 @@ void printf(const char* fmt,...)
                 switch(*fmt)
                 {
                     case 'c':
-                        putc((char)*argp);
-                        argp++;
+                        putc((char)va_arg(args,int));
                         break;
                     case 's':
-                        puts(*(char**)argp);
-                        argp++;
+                        puts(va_arg(args,char*));
                         break;
                     case 'x':
                     case 'X':
                     case 'p':
+                        radix = 16; number = true; sign = false;
+                        break;
+                    case 'd':
+                    case 'i':
+                        radix = 10; number = true; sign = true;
+                    case 'u':
                         radix = 10; number = true; sign = false;
                         break;
                     default:
@@ -203,28 +217,46 @@ void printf(const char* fmt,...)
                     {
                         if (length == PRINTF_LENGTH_LONG)
                         {
-                            printf_unsigned(*(unsigned long*)argp,radix);
-                            argp +=2;
+                            printf_unsigned(va_arg(args,unsigned long),radix);
                         }
                         else if (length == PRINTF_LENGTH_LONG_LONG)
                         {
-                            printf_unsigned(*(unsigned long long*)argp,radix);
-                            argp +=4;
+                            printf_unsigned(va_arg(args,unsigned long long),radix);
                         }
                         else if (length == PRINTF_LENGTH_SHORT)
                         {
-                            printf_unsigned(*(unsigned short*)argp,radix);
-                            argp++;
+                            printf_unsigned(va_arg(args,unsigned int),radix);
                         }
                         else if (length == PRINTF_LENGTH_SHORT_SHORT)
                         {
-                            printf_unsigned(*(unsigned char*)argp,radix);
-                            argp++;
+                            printf_unsigned(va_arg(args,unsigned int),radix);
                         }
                         else if (length == PRINTF_LENGTH_NORMAL)
                         {
-                            printf_unsigned(*(unsigned int*)argp,radix);
-                            argp++;
+                            printf_unsigned(va_arg(args,unsigned int),radix);
+                        }
+                    }
+                    else
+                    {
+                        if (length == PRINTF_LENGTH_LONG)
+                        {
+                            printf_signed(va_arg(args,unsigned long),radix);
+                        }
+                        else if (length == PRINTF_LENGTH_LONG_LONG)
+                        {
+                            printf_signed(va_arg(args,unsigned long long),radix);
+                        }
+                        else if (length == PRINTF_LENGTH_SHORT)
+                        {
+                            printf_signed(va_arg(args,unsigned int),radix);
+                        }
+                        else if (length == PRINTF_LENGTH_SHORT_SHORT)
+                        {
+                            printf_signed(va_arg(args,unsigned int),radix);
+                        }
+                        else if (length == PRINTF_LENGTH_NORMAL)
+                        {
+                            printf_signed(va_arg(args,unsigned int),radix);
                         }
                     }
                 }

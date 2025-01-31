@@ -28,6 +28,7 @@ void Run_Qemu()
         CCS_AddArgument(runcmd,driveinfo);
         CCS_AddArgument(runcmd,"-device ahci,id=ahci");
         CCS_AddArgument(runcmd,"-device ide-hd,drive=disk,bus=ahci.0");
+        CCS_AddArgument(runcmd,"-machine q35");
         CCS_Execute_Command(runcmd,true);
         free(driveinfo);
         CCS_DestroyCommand(runcmd);
@@ -307,7 +308,7 @@ int main(int argc,char* argv[])
                         CCS_AddArgument(compile_stage2_c_file,"-mno-red-zone");
                         CCS_AddArgument(compile_stage2_c_file,"-Wall");
                         CCS_AddArgument(compile_stage2_c_file,"-Werror");
-                        CCS_AddArgument(compile_stage2_c_file,"-I libc/include");
+                        CCS_AddArgument(compile_stage2_c_file,"-lgcc");
                         CCS_AddArgument(compile_stage2_c_file,"-c");
                         CCS_AddArgument(compile_stage2_c_file,files[filei]);
                         CCS_AddArgument(compile_stage2_c_file,"-o");

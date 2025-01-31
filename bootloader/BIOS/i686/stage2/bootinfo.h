@@ -20,4 +20,5 @@ typedef struct
 {
     uint32_t DisplayMode;
     uint32_t MemoryMapLocation;
+    uint8_t MemoryMapBlockCount;
 }__attribute__((packed))bootinfo_t;

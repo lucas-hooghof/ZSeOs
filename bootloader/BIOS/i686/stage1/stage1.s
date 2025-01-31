@@ -92,6 +92,7 @@ gdt_data_segment:
     .byte 0x00
 gdt_end:
 
+MemoryBlockCOunt: .byte 0
 
 #Will check for VESA
 #If its not present it will set a value
@@ -122,6 +123,8 @@ Loop:
 
     addw $24,%di
 
+    incb MemoryBlockCOunt
+
     jmp Loop
 End:
     ret
@@ -140,7 +143,7 @@ DISK_DAP:
     .byte 0x10
     .byte 0x00
 sector_count:
-    .word 0x0010
+    .word 0x0020
 offset:
     .word 0x8000
 segment:
@@ -165,8 +168,11 @@ pmode_init:
     movl %esp,%ebp
     pop %eax
 
+    xorb %ah,%ah
     movl $0,0x00000500
     movl $0x00005000,0x00000504
+    movb MemoryBlockCOunt,%ah
+    movb %ah,0x00000508
     jmp 0x8000
 
 _loop32:
