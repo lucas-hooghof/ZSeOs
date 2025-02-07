@@ -15,6 +15,10 @@ uint16_t x_max_text_mode = 0;
 uint16_t y_max_text_mode = 0;
 void putc_text_mode(char c)
 {
+    if (debugenabled)
+    {
+        i686_outb(0xE9,c);
+    }
     if (c == '\n')
     {
         x_text_mode = 0;

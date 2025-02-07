@@ -2,7 +2,7 @@
 
 .global _start
 .extern _cstart
-
+.section .early
 _start:
 
 StartC:

@@ -14,4 +14,17 @@ i686_inb:
     inb %dx,%al
     ret
 
+.global i686_inl
+i686_inl:
+    movw 4(%esp),%dx
+    xor %eax,%eax
+    inl %dx,%eax
+    ret
 
+.global i686_outl
+i686_outl:
+    movw 4(%esp),%dx
+    movl 8(%esp),%eax
+    outl %eax,%dx
+    ret
+    

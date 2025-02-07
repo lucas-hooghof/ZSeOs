@@ -3,8 +3,6 @@
 #include "print.h"
 #include "io.h"
 #include "memory.h"
-#include "ACPI.h"
-#include "ata.h"
 
 void _cstart()
 {
@@ -24,28 +22,6 @@ void _cstart()
     printf("    Memory Map Location: %x\n",info->MemoryMapLocation);
     printf("    Block Count: %hhu\n",info->MemoryMapBlockCount);
 
-    printf("Printing Memory:\n");
-
-    for (int i = 0; i < info->MemoryMapBlockCount; i++)
-    {
-        MemoryBlock* block = (MemoryBlock*)(info->MemoryMapLocation + (i * sizeof(MemoryBlock)));
-        printf("%i: Base=%llx,Length=%llx,Type=%u\n",i,block->base,block->length,block->regiontype);
-    }
-
-    int ACPIVer = GetACPIRevision();
-    if (ACPIVer == -1)
-    {
-        printf("Failed to get ACPI");
-    }
-
-    printf("ACPI version: %i\n",ACPIVer);
-    PrintACPITables();
-
-    //printf("Check for IDE devices\n");
-    //IdentifyDrive(ATA_MASTER);
-    //IdentifyDrive(ATA_SLAVE);
-
-    
     for (;;)
     {}
 }

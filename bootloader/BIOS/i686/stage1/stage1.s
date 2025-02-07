@@ -132,7 +132,7 @@ End:
 
 Load_Stage2:
     movl $2,sector_start
-    movw $DISK_DAP,%si
+    movw $DISK_DAP_STAGE2,%si
     movb $0x42,%ah
     int $0x13
 
@@ -166,7 +166,7 @@ print:
 1:
     ret
 
-DISK_DAP:
+DISK_DAP_STAGE2:
     .byte 0x10
     .byte 0x00
 sector_count:

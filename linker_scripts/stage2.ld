@@ -6,6 +6,7 @@ SECTIONS
     . = 0x8000;
 
     .text : {
+        *(.early)
         *(.text)
         *(.text.*)
     }
